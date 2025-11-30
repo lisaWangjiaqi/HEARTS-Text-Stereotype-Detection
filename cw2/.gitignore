@@ -1,0 +1,34 @@
+# 不上传所有模型 checkpoint
+results/
+**/checkpoint-*/
+**/final_model/
+**/emissions.csv
+**/runs/
+
+# Huggingface 缓存
+~/.cache/huggingface/
+~/.cache/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 大文件（防止不小心上传）
+*.bin
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+
+# VSCode
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 数据处理临时文件
+*.tmp
+*.log
+
