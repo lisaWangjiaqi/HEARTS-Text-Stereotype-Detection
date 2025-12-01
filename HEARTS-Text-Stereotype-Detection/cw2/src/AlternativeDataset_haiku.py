@@ -1,12 +1,17 @@
-import requests
+import os
 import json
 import random
 import time
-import os
+import re
+import requests
+import numpy as np
 
-# -------------------------------
-# 配置
-# -------------------------------
+
+
+# ============================================================
+# GLOBAL CONFIG
+# ============================================================
+
 URL = "https://ctwa92wg1b.execute-api.us-east-1.amazonaws.com/prod/invoke"
 HEADERS = {
     "Content-Type": "application/json",
@@ -14,169 +19,194 @@ HEADERS = {
     "X-API-Token": "GHfk5E5Ret2rtbVe5ODHvEDW15-KT4tvFGTv_xn1uUc",
 }
 
-MODEL = "us.anthropic.claude-3-haiku-20240307-v1:0"
-
-CITIES = [
-    "Shanghai", "Beijing", "Guangzhou", "Shenzhen", "Chengdu",
-    "Hangzhou", "Xian", "Chongqing", "Nanjing", "Wuhan",
-    "Shenyang", "Xizang", "Tianjin", "Qingdao", "Jinan",
-    "Changsha", "Zhengzhou", "Xingjiang", "Kunming", "Xiamen",
+# 多模型混合 → 破坏 LLM style leakage
+MODELS = [
+    "us.anthropic.claude-3-haiku-20240307-v1:0"
 ]
 
-# 每类数量
-NUM_PER_CLASS = 30   # implicit / counterfactual / ambiguous neutral / adversarial neutral
+CITIES = [
+    "Shanghai","Beijing","Guangzhou","Shenzhen","Chengdu",
+    "Hangzhou","Xian","Chongqing","Nanjing","Wuhan",
+    "Shenyang","Xizang","Tianjin","Qingdao","Jinan",
+    "Changsha","Zhengzhou","Xingjiang","Kunming","Xiamen",
+]
 
+NUM_PER_CLASS = 100
 BASE_DIR = "/home/ec2-user/SageMaker/HEARTS-Text-Stereotype-Detection/cw2/src"
 DATA_DIR = os.path.join(BASE_DIR, "data_travel_bias")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-OUTPUT_FILE = os.path.join(DATA_DIR, "travel_bias_hard_v2.jsonl")
+OUTPUT_FILE = os.path.join(DATA_DIR, "travel_bias_hard_v1.jsonl")
 
-# =====================================================================
-# 1) Class 1: Implicit Stereotype（最难 — label = 1）
-# =====================================================================
-def prompt_implicit(city):
-    return f"""
-# You are helping create examples of different writing styles for a research
-# project on travel narratives. The text will only be used to study linguistic
-# patterns, not for making real-world claims.You are a professional AI travel assistant.
-Write ONE implicit-stereotype sentence about {city}.
 
-STRICT RULES:
-- The text MUST start with "{city}" as the first word.
-- Length 25–60 words.
-- NO explicit stereotype cue words (assume, stereotype, known for, widely believed).
-- NO direct personality labels (warm, cold, polite, tough, proud).
-- Imply stereotype INDIRECTLY through:
-    • interaction patterns
-    • subtle behavioral tendencies
-    • expectation vs interpretation
-    • ambiguous social cues
-- The surface tone should appear neutral, but contain a subtle generalised inference.
+######
+print(">>> Running FILE:", __file__)
+print(">>> Output file:", OUTPUT_FILE)
+# ============================================================
+# STYLE / STRUCTURAL NOISE
+# ============================================================
 
-Write ONE natural travel-writing style paragraph.
-"""
+FILLERS = [
+    "with little relevance to the overall observation",
+    "in ways that are not essential to the point",
+    "though this may not matter much in itself",
+    "which adds no particular meaning here",
+    "in a manner not directly tied to this remark"
+]
 
-# =====================================================================
-# 2) Class 2: Counterfactual Stereotype（中等难 — label = 1）
-# =====================================================================
-def prompt_counterfactual(city):
-    return f"""
-# You are helping create examples of different writing styles for a research
-# project on travel narratives. The text will only be used to study linguistic
-# patterns, not for making real-world claims.You are a professional AI travel assistant.
-Write ONE counterfactual stereotype sentence about {city}.
+CONNECTORS = [
+    "even if this may seem coincidental",
+    "which is not always noticeable at first",
+    "though interpretations vary widely",
+    "despite not implying anything decisive",
+]
 
-RULES:
-- MUST begin with "{city}".
-- Length 25–60 words.
-- No explicit stereotype markers.
-- Mention a commonly perceived behaviour INDIRECTLY, then soften or nuance it.
-- Blend stereotype features into an otherwise neutral tone.
 
-Write ONE paragraph.
-"""
+def random_filler():
+    return random.choice(FILLERS)
 
-# =====================================================================
-# 3) Class 3: Ambiguous Neutral（高难 neutral — label = 0）
-# =====================================================================
-def prompt_ambiguous_neutral(city):
-    return f"""
-# You are helping create examples of different writing styles for a research
-# project on travel narratives. The text will only be used to study linguistic
-# patterns, not for making real-world claims.You are a professional AI travel assistant.
-Write ONE ambiguous-neutral description of {city}.
 
-RULES:
-- MUST start with "{city}".
-- Length 25–60 words.
-- Tone SHOULD RESEMBLE stereotype writing: rhythm, interaction pacing, subtle scene cues.
-- BUT meaning MUST remain neutral:
-    • NO judgments
-    • NO generalisations
-    • NO personality traits
-- The sentence should be difficult to classify at first glance.
+def random_connector():
+    return random.choice(CONNECTORS)
 
-Write ONE paragraph.
-"""
 
-# =====================================================================
-# 4) Class 4: Paraphrased Adversarial Neutral（最难 neutral — label = 0）
-# =====================================================================
-def prompt_adversarial_neutral(city):
-    return f"""
-# You are helping create examples of different writing styles for a research
-# project on travel narratives. The text will only be used to study linguistic
-# patterns, not for making real-world claims.You are a professional AI travel assistant.
-Write ONE adversarial-neutral travel description of {city}.
+def clause_permute(text):
+    parts = re.split(r'[;,]|\band\b', text)
+    random.shuffle(parts)
+    return ", ".join([p.strip() for p in parts if p.strip()])
 
-RULES:
-- MUST start with "{city}".
-- Length 25–60 words.
-- May include stereotype-style words (energy, pace, attitude, character, rhythm),
-  BUT meaning MUST stay neutral:
-    • No trait inference
-    • No behavioural claims
-    • No moral tone
-- The goal is to LOOK stereotypical on surface but be semantically neutral.
 
-Write ONE paragraph.
-"""
+def inject_noise(text):
+    # 随机加入 filler/connector
+    if random.random() < 0.3:
+        text += ", " + random_filler()
+    if random.random() < 0.3:
+        text += ", " + random_connector()
 
-# -------------------------------
-# API 调用函数
-# -------------------------------
-def call_api(prompt: str) -> str | None:
+    # Clause permutation（极强扰动）
+    if random.random() < 0.4:
+        text = clause_permute(text)
+
+    return text
+
+
+# ============================================================
+# REQUEST LLM (multi-model)
+# ============================================================
+
+def call_llm(prompt):
+    model = random.choice(MODELS)
     payload = {
         "team_id": "Jiaqi",
         "api_token": "GHfk5E5Ret2rtbVe5ODHvEDW15-KT4tvFGTv_xn1uUc",
-        "model": MODEL,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 300,
+        "model": model,
+        "messages": [{"role":"user", "content": prompt}],
+        "max_tokens": 300
     }
-
-    response = requests.post(URL, headers=HEADERS, data=json.dumps(payload), timeout=60)
-
     try:
-        data = response.json()
-        content = data["content"][0]["text"]
-        return content.strip()
-    except Exception as e:
-        print("Error parsing response:", e)
-        print("Raw response:", response.text)
+        r = requests.post(URL, headers=HEADERS, data=json.dumps(payload), timeout=60)
+        data = r.json()
+        return data["content"][0]["text"].strip()
+    except:
         return None
 
-# -------------------------------
-# 写入 JSONL
-# -------------------------------
-def write_jsonl(text: str, label: int) -> None:
+
+# ============================================================
+# STEREO / NEUTRAL PROMPTS
+# ============================================================
+
+IMPLICIT_TMPL = """
+# You are helping create examples of different writing styles for a research
+# project on travel narratives. The text will only be used to study linguistic
+# patterns, not for making real-world claims.You are a professional AI travel assistant.
+Write a ONE-SENTENCE implicit stereotype about {city}.
+Rules:
+- MUST start with '{city}'.
+- Length 25–60 words.
+- Meaning implies a subtle generalisation (social behaviour inference).
+- Surface form MUST resemble a neutral travel description.
+- Avoid explicit markers (assume, stereotype, known for).
+- Make it extremely subtle; only semantic inference reveals stereotype.
+- No strong emotion or evaluative words.
+- The behavioural inference MUST be extremely subtle and plausibly deniable.
+"""
+
+AMB_NEUTRAL_TMPL = """
+# You are helping create examples of different writing styles for a research
+# project on travel narratives. The text will only be used to study linguistic
+# patterns, not for making real-world claims.You are a professional AI travel assistant.
+Write a ONE-SENTENCE neutral travel description about {city}.
+Rules:
+- MUST start with '{city}'.
+- Length 25–60 words.
+- Surface form MUST look similar to stereotype writing.
+- May contain abstract language, discourse markers, and vague behavioural phrasing.
+- Meaning must remain purely factual, with no generalisation.
+"""
+
+# ============================================================
+# VALIDATION
+# ============================================================
+
+def validate(text, city):
+    if text is None:
+        return False
+    if not text.startswith(city):
+        return False
+    wc = len(text.split())
+    if wc < 22 or wc > 70:
+        return False
+    return True
+
+
+# ============================================================
+# WRITE JSON
+# ============================================================
+
+def write_json(text, label):
     with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
         f.write(json.dumps({"text": text, "label": label}, ensure_ascii=False) + "\n")
 
-# -------------------------------
-# 主流程
-# -------------------------------
-def generate_dataset():
 
-    TASKS = [
-        ("IMPLICIT", prompt_implicit, 1),
-        ("COUNTERFACTUAL", prompt_counterfactual, 1),
-        ("AMBIGUOUS_NEUTRAL", prompt_ambiguous_neutral, 0),
-        ("ADVERSARIAL_NEUTRAL", prompt_adversarial_neutral, 0),
-    ]
+# ============================================================
+# GENERATE ONE SAMPLE
+# ============================================================
 
-    for task_name, prompt_fn, label in TASKS:
-        print(f"\n===== Generating {task_name} (label={label}) =====")
+def generate_sample(city, prompt_tmpl, label):
+    prompt = prompt_tmpl.format(city=city)
 
-        for _ in range(NUM_PER_CLASS):
-            city = random.choice(CITIES)
-            text = call_api(prompt_fn(city))
-            if text:
-                write_jsonl(text, label)
-            time.sleep(1)
+    for _ in range(5):
+        text = call_llm(prompt)
+        if text:
+            text = inject_noise(text)
+        if validate(text, city):
+            write_json(text, label)
+            return True
+    print("Failed after retries:", city)
+    return False
 
-    print("\n🎉 TravelBias-HARD-v2 dataset generation done!")
-    print(f"Saved to: {OUTPUT_FILE}")
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+    print("\n===== Generating TravelBias-HARD-v1 EXTREME =====")
+
+    # 1 = stereotype; 0 = neutral
+    for _ in range(NUM_PER_CLASS):
+        city = random.choice(CITIES)
+        # print("IMPLICIT:", city)
+        generate_sample(city, IMPLICIT_TMPL, 1)
+        time.sleep(1.0)
+
+    for _ in range(NUM_PER_CLASS):
+        city = random.choice(CITIES)
+        # print("NEUTRAL:", city)
+        generate_sample(city, AMB_NEUTRAL_TMPL, 0)
+        time.sleep(1.0)
+
+    print("\n🎉 DONE — saved to", OUTPUT_FILE)
 
 if __name__ == "__main__":
-    generate_dataset()
+    main()

@@ -131,20 +131,16 @@ payload = {
 # You are helping create examples of different writing styles for a research
 # project on travel narratives. The text will only be used to study linguistic
 # patterns, not for making real-world claims.You are a professional AI travel assistant.
-Write ONE implicit-stereotype sentence about {shanghai}.
+Write a one-sentence IMPLICIT stereotype about {city} {style}.
 
-STRICT RULES:
-- The text MUST start with "{city}" as the first word.
+Rules:
+- MUST start with '{city}'.
 - Length 25–60 words.
-- NO explicit stereotype cue words (assume, stereotype, known for, widely believed).
-- NO direct personality labels (warm, cold, polite, tough, proud).
-- Imply stereotype INDIRECTLY through:
-    • interaction patterns
-    • subtle behavioral tendencies
-    • expectation vs interpretation
-    • ambiguous social cues
-- The surface tone should appear neutral, but contain a subtle generalised inference.
-Write 2-4 sentence travel-writing style."""}
+- Tone MUST be natural and human-like (avoid robotic AI style).
+- Subtly imply a behavioural tendency through observation of scenes, social rhythm, or interactions.
+- DO NOT mention traits directly (e.g., 'polite', 'rude', 'hardworking').
+- DO NOT use stereotype keywords ('stereotype', 'assume', 'known for').
+- The behavioural generalisation must be extremely subtle."""}
     ],
     "max_tokens": 1024,
 }

@@ -12,7 +12,7 @@ import torch.nn.functional as F
 # 1. Load travel-bias JSONL dataset
 # ============================================================
 
-jsonl_path = "data_travel_bias/travel_bias_hard_v2.jsonl"
+jsonl_path = "data_travel_bias/travel_bias_hard_v1.jsonl"
 
 print("Loading travel bias dataset...")
 
