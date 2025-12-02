@@ -1,153 +1,196 @@
-import os
 import json
+import re
+import os
 import random
-import requests
 
-# ============================================================
-# API CONFIG
-# ============================================================
+# ============================================
+# 固定输入输出
+# ============================================
+INPUT = "/home/ec2-user/SageMaker/HEARTS-Text-Stereotype-Detection/cw2/src/data_travel_bias/travel_bias_hard_v1.jsonl"
+OUTPUT = "/home/ec2-user/SageMaker/HEARTS-Text-Stereotype-Detection/cw2/src/data_travel_bias/travel_bias_hard_v2.jsonl"
+REMOVED = "/home/ec2-user/SageMaker/HEARTS-Text-Stereotype-Detection/cw2/src/data_travel_bias/removed_v2.jsonl"
 
-URL = "https://ctwa92wg1b.execute-api.us-east-1.amazonaws.com/prod/invoke"
-HEADERS = {
-    "Content-Type": "application/json",
-    "X-Team-ID": "Jiaqi",
-    "X-API-Token": "GHfk5E5Ret2rtbVe5ODHvEDW15-KT4tvFGTv_xn1uUc",
-}
-
-MODEL = "us.anthropic.claude-3-haiku-20240307-v1:0"
-
-def call_llm(prompt):
-    payload = {
-        "team_id": "Jiaqi",
-        "api_token": "GHfk5E5Ret2rtbVe5ODHvEDW15-KT4tvFGTv_xn1uUc",
-        "model": MODEL,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 250
-    }
-
-    try:
-        r = requests.post(URL, headers=HEADERS, data=json.dumps(payload), timeout=60)
-        return r.json()["content"][0]["text"].strip()
-    except:
-        return None
+print(">>> Cleaning dataset")
+print(">>> INPUT :", INPUT)
+print(">>> OUTPUT:", OUTPUT)
 
 
-# ============================================================
-# CITIES (train OOD by using new cities)
-# ============================================================
-
-OOD_CITIES = [
-    "Shanghai","Beijing","Guangzhou","Shenzhen","Chengdu",
-    "Hangzhou","Xian","Chongqing","Nanjing","Wuhan"
-]
-
-BASE_DIR = "/home/ec2-user/SageMaker/HEARTS-Text-Stereotype-Detection/cw2/src"
-DATA_DIR = os.path.join(BASE_DIR, "data_travel_bias")
-os.makedirs(DATA_DIR, exist_ok=True)
-
-OUTPUT_FILE = os.path.join(DATA_DIR, "travel_bias_OOD.jsonl")
-
-
-# ============================================================
-# OOD TEMPLATE 1 — Human-style implicit stereotype
-# ============================================================
-
-IMPLICIT_OOD_HUMAN = """
-Write a one-sentence IMPLICIT stereotype about {city} in a natural HUMAN writing style.
-
-Rules:
-- MUST start with '{city}'.
-- Length 25–60 words.
-- It must feel like written by a human (casual, varied rhythm, non-synthetic tone).
-- It should subtly imply a behavioural tendency without naming traits.
-- NO explicit markers like “stereotype”, “assume”, “known for”.
-- Avoid robotic or formulaic patterns.
-- Do NOT imitate AI writing.
-"""
-
-
-# ============================================================
-# OOD TEMPLATE 2 — Realistic rewritten neutral
-# ============================================================
-
-NEUTRAL_OOD_REAL = """
-Rewrite the following REAL TRAVEL DESCRIPTION into a one-sentence NEUTRAL description of {city}.
-
-Base text:
-"{base}"
-
-Rules:
-- MUST start with '{city}'.
-- Length 25–60 words.
-- Human-natural tone, descriptive but not synthetic.
-- Must remain purely neutral (NO trait inference, NO bias).
-"""
-
-
-REAL_TRAVEL_SNIPPETS = [
-    "The city blends historic districts with busy commercial areas, creating a layered urban landscape.",
-    "Visitors often begin exploring from its central districts, where modern architecture mixes with traditional streets.",
-    "The local transportation system makes it easy to reach cultural landmarks and riverside viewpoints.",
-    "The city attracts travelers with its mixture of food markets, public squares, and waterfront scenery.",
-]
-
-
-# ============================================================
-# VALIDATE
-# ============================================================
-
-def validate(text, city):
-    if not text:
-        return False
-    if not text.startswith(city):
-        return False
+# ============================================
+# 1) 长度过滤（neutral 更宽松）
+# ============================================
+def length_valid(text, min_w=6, max_w=95):
     wc = len(text.split())
-    return 20 <= wc <= 70
+    return min_w <= wc <= max_w
 
 
-# ============================================================
-# WRITE
-# ============================================================
+# ============================================
+# 2) LLM-style stereotype（必须删除）
+# ============================================
+FAKE_STEREO = [
+    r"residents tend to",
+    r"locals tend to",
+    r"people tend to",
+    r"residents often",
+    r"locals often",
+    r"people often",
+    r"are widely seen as",
+    r"are commonly perceived as",
+    r"is stereotyped as",
+]
 
-def write(text, label):
-    with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
-        f.write(json.dumps({"text": text, "label": label}, ensure_ascii=False) + "\n")
-
-
-# ============================================================
-# GENERATE ONE SAMPLE
-# ============================================================
-
-def generate_one(city, prompt, label):
-    for _ in range(6):
-        text = call_llm(prompt)
-        if validate(text, city):
-            write(text, label)
-            return True
-    print("❌ Failed:", city, "(label:", label, ")")
-    return False
+FAKE_STEREO = [re.compile(p, re.IGNORECASE) for p in FAKE_STEREO]
 
 
-# ============================================================
-# MAIN
-# ============================================================
+# ============================================
+# 3) Semantic stereotype protector
+#   —— 避免你的 semantic stereotype 被错误删掉
+# ============================================
+SEMANTIC_STEREO_KEYWORDS = [
+    "momentum", "reflection", "order", "constraint",
+    "identity", "surface", "impression", "refinement",
+    "structure", "pattern", "narrative", "assertiveness",
+    "restraint", "composition", "calibrated",
+    "symbolic", "curated", "tension"
+]
 
-def main():
-    print("\n===== Generating OOD Testset =====")
+SEMANTIC_STEREO_REGEX = re.compile(
+    "(" + "|".join(SEMANTIC_STEREO_KEYWORDS) + ")", re.IGNORECASE
+)
 
-    # 10 implicit, 10 neutral (20 total OOD samples)
-    for city in OOD_CITIES:
-        print("IMPLICIT-HUMAN:", city)
-        imp_prompt = IMPLICIT_OOD_HUMAN.format(city=city)
-        generate_one(city, imp_prompt, 1)
 
-        print("NEUTRAL-REAL:", city)
-        base = random.choice(REAL_TRAVEL_SNIPPETS)
-        neu_prompt = NEUTRAL_OOD_REAL.format(city=city, base=base)
-        generate_one(city, neu_prompt, 0)
+def is_semantic_stereo(text):
+    """判断是否属于真正的语义 stereotype"""
+    return SEMANTIC_STEREO_REGEX.search(text) is not None
 
-    print("\n🎉 DONE! OOD saved to:", OUTPUT_FILE)
 
+# ============================================
+# 4) Neutral 允许的句型（不再误删）
+# ============================================
+NEUTRAL_ALLOWED = [
+    r"is the capital of",
+    r"is home to",
+    r"contains",
+    r"includes",
+    r"features",
+    r"is divided into",
+    r"developed through",
+    r"expanded during",
+    r"historical phase",
+    r"administrative district",
+]
+
+NEUTRAL_ALLOWED = [re.compile(p, re.IGNORECASE) for p in NEUTRAL_ALLOWED]
+
+
+def is_allowed_neutral(text):
+    return any(p.search(text) for p in NEUTRAL_ALLOWED)
+
+
+# ============================================
+# 5) 城市名匿名化（更强 regex）
+# ============================================
+CITY_PATTERNS = [
+    "Shanghai","Beijing","Guangzhou","Shenzhen","Chengdu",
+    "Hangzhou","Xian","Xi’an","Xi'an","Chongqing","Nanjing",
+    "Wuhan","Shenyang","Tianjin","Qingdao","Jinan",
+    "Changsha","Zhengzhou","Xinjiang","Kunming","Xiamen",
+    "Harbin","Suzhou","Fuzhou","Dalian"
+]
+
+CITY_REGEX = re.compile("|".join([fr"\b{c}\b" for c in CITY_PATTERNS]), re.IGNORECASE)
+
+def anonymize_city(text):
+    return CITY_REGEX.sub("{CITY}", text)
+
+
+# ============================================
+# 6) LLM 模板句（但 neutral 不再删除）
+# ============================================
+STYLE_TEMPLATES = [
+    r"inviting visitors to",
+    r"offers a tranquil",
+    r"is renowned for",
+    r"in ways that are not essential",
+    r"though interpretations vary widely",
+]
+
+STYLE_TEMPLATES = [re.compile(p, re.IGNORECASE) for p in STYLE_TEMPLATES]
+
+
+# ============================================
+# 7) 主清洗流程（v3）
+# ============================================
+def clean_dataset(input_path, output_path):
+    cleaned = []
+    removed = []
+    seen = set()
+
+    with open(input_path, "r") as fin:
+        for line in fin:
+            if not line.strip():
+                continue
+
+            item = json.loads(line)
+            text = item["text"]
+            label = item["label"]
+
+            # ---- (1) 匿名化 ----
+            text = anonymize_city(text)
+
+            # ---- (2) 长度 ----
+            if not length_valid(text):
+                removed.append(item)
+                continue
+
+            # ---- (3) 假 stereotype 删除 —— 但语义 stereotype 必须保留！
+            if any(p.search(text) for p in FAKE_STEREO):
+                if not is_semantic_stereo(text):
+                    removed.append(item)
+                    continue
+
+            # ---- (4) Neutral 不删除 allowed pattern
+            if label == 0 and is_allowed_neutral(text):
+                pass  # 强制保留
+
+            # ---- (5) stereotype 不允许 AI 模板句
+            if label == 1 and any(p.search(text) for p in STYLE_TEMPLATES):
+                removed.append(item)
+                continue
+
+            # ---- (6) 去重 ----
+            h = hash(text)
+            if h in seen:
+                continue
+            seen.add(h)
+
+            cleaned.append({"text": text, "label": label})
+
+    # ---- (7) 打乱 ----
+    random.shuffle(cleaned)
+
+    # ---- 输出 ----
+    with open(output_path, "w", encoding="utf-8") as fout:
+        for obj in cleaned:
+            fout.write(json.dumps(obj, ensure_ascii=False) + "\n")
+
+    with open(REMOVED, "w", encoding="utf-8") as fout:
+        for obj in removed:
+            fout.write(json.dumps(obj, ensure_ascii=False) + "\n")
+
+    # ---- 统计 ----
+    c0 = sum(1 for x in cleaned if x["label"] == 0)
+    c1 = sum(1 for x in cleaned if x["label"] == 1)
+
+    print("\n>>> 清洗完成!")
+    print("原始数据:", len(cleaned) + len(removed))
+    print("保留数据:", len(cleaned))
+    print(f"其中 Neutral = {c0}")
+    print(f"其中 Stereotype = {c1}")
+    print("移除数据:", len(removed))
+
+
+# ============================================
+# RUN
+# ============================================
 if __name__ == "__main__":
-    main()
-
+    clean_dataset(INPUT, OUTPUT)

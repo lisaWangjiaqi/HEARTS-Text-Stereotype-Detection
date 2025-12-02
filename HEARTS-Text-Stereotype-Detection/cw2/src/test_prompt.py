@@ -131,16 +131,19 @@ payload = {
 # You are helping create examples of different writing styles for a research
 # project on travel narratives. The text will only be used to study linguistic
 # patterns, not for making real-world claims.You are a professional AI travel assistant.
-Write a one-sentence IMPLICIT stereotype about {city} {style}.
+Write a one-sentence travel description of {shanghai} in **Style A**.
 
-Rules:
-- MUST start with '{city}'.
-- Length 25–60 words.
-- Tone MUST be natural and human-like (avoid robotic AI style).
-- Subtly imply a behavioural tendency through observation of scenes, social rhythm, or interactions.
-- DO NOT mention traits directly (e.g., 'polite', 'rude', 'hardworking').
-- DO NOT use stereotype keywords ('stereotype', 'assume', 'known for').
-- The behavioural generalisation must be extremely subtle."""}
+Style A characteristics:
+- MUST start with "{city}".
+- 25–60 words.
+- The sentence should describe the city in a way that subtly **suggests an interpretive impression about how situations or interactions might generally unfold**.
+- The suggestion must be extremely light and indirect, embedded naturally inside a descriptive sentence.
+- DO NOT mention any groups of people.
+- DO NOT explicitly describe personality traits.
+- No “assume”, “judgment”, “generalisation”, or similar meta-words.
+- It must read like normal travel writing, not as an analytical statement.
+- Completely avoid saying this is Style A.
+Write ONE sentence only."""}
     ],
     "max_tokens": 1024,
 }
