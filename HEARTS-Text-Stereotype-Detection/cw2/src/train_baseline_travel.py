@@ -12,7 +12,7 @@ import torch.nn.functional as F
 # 1. Load travel-bias JSONL dataset
 # ============================================================
 
-jsonl_path = "data_travel_bias/travel_bias_hard_v1.jsonl"
+jsonl_path = "Travelbias_dataset/travel_bias_hard_v2.jsonl"
 
 print("Loading travel bias dataset...")
 
@@ -32,7 +32,7 @@ print(f"Total samples: {len(dataset)}")
 # 2. Load EMGSD baseline (你的最佳 checkpoint)
 # ============================================================
 
-EMGSD_MODEL_DIR = "/home/ec2-user/SageMaker/HEARTS-Text-Stereotype-Detection/results/emgsd/checkpoint-8580"
+EMGSD_MODEL_DIR = "/home/ec2-user/SageMaker/HEARTS-Text-Stereotype-Detection/cw2/src/results/emgsd_baseline_albert/checkpoint-11440"
 
 print("\nLoading EMGSD baseline model...")
 tokenizer = AutoTokenizer.from_pretrained("albert-base-v2")

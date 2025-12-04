@@ -6,11 +6,12 @@ import json
 import torch
 from datasets import Dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
-OOD_PATH = "data_travel_bias/travel_bias_OOD.jsonl"
-MODEL_DIR = "results/improved_roberta/checkpoint-129"
-
+OOD_PATH = "Travelbias_dataset/travel_bias_OOD.jsonl"
+# MODEL_DIR = "results/improved_roberta/checkpoint-129"
+MODEL_DIR = "results/improved_roberta_merge/checkpoint-118"
 # ================================
 # device 自动检测
 # ================================
@@ -77,3 +78,23 @@ macro_f1 = f1_score(labels, preds, average="macro")
 print("\n===== OOD Evaluation =====")
 print("Accuracy:", acc)
 print("Macro-F1:", macro_f1)
+
+# ============================================================
+# 🚀 新增部分：生成并保存 Confusion Matrix
+# ============================================================
+
+print("\n===== Saving Confusion Matrix =====")
+
+# 类别名称（你可以改）
+class_names = ["neutral", "biased"]
+
+cm = confusion_matrix(labels, preds)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
+
+plt.figure(figsize=(6, 6))
+disp.plot(cmap="Blues", values_format="d")
+plt.title("Confusion Matrix - OOD Evaluation")
+plt.savefig("ood_confusion_matrix.png", dpi=300, bbox_inches="tight")
+plt.close()
+
+print("Saved confusion matrix to: ood_confusion_matrix.png")
