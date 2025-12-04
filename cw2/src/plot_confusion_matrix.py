@@ -1,14 +1,3 @@
-"""
-plot_confusion_matrix.py
-
-功能:
-    - 加载你训练好的 improved_roberta 模型
-    - 在 test_ds 上跑预测
-    - 生成并保存混淆矩阵 plot_confusion_matrix.png
-
-运行方式:
-    python plot_confusion_matrix.py
-"""
 
 import os
 import json
@@ -26,10 +15,7 @@ from transformers import (
 )
 
 
-# ============================================================
-# 1. 数据加载（保持与你训练脚本一致）
-# ============================================================
-
+# 1. 
 # DATA_PATH = "data_travel_bias/travel_bias_hard_v2.jsonl"
 DATA_PATH = "Travelbias_dataset/merged_dataset.jsonl"
 data_list = []
@@ -42,15 +28,13 @@ dataset = Dataset.from_list(data_list)
 dataset = dataset.train_test_split(test_size=0.2, seed=42)
 train_val = dataset["train"].train_test_split(test_size=0.2, seed=42)
 
-test_ds = dataset["test"]   # 只需要 test
+test_ds = dataset["test"]  
 
 
-# ============================================================
-# 2. Tokenizer & preprocess（与训练完全一致）
-# ============================================================
+# 2. Tokenizer & preprocess
 
-# MODEL_DIR = "results/improved_roberta/checkpoint-129"   # 训练保存目录
-MODEL_DIR = "results/improved_roberta_merge/checkpoint-118" #merged
+# MODEL_DIR = "results/improved_roberta/checkpoint-129"  
+MODEL_DIR = "results/improved_roberta_merge/checkpoint-118" # merged
 MODEL_NAME = "roberta-large"
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
@@ -69,16 +53,10 @@ test_ds = test_ds.map(preprocess, remove_columns=test_ds.column_names)
 test_ds.set_format("torch")
 
 
-# ============================================================
-# 3. 加载模型
-# ============================================================
-
+# 3.
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR)
 
-
-# ============================================================
-# 4. 创建 Trainer（只为了 predict）
-# ============================================================
+# 4.  Trainer
 
 args = TrainingArguments(
     output_dir="tmp_confusion",
@@ -92,11 +70,7 @@ trainer = Trainer(
     tokenizer=tokenizer,
 )
 
-
-# ============================================================
 # 5. Predict → preds / labels
-# ============================================================
-
 pred_output = trainer.predict(test_ds)
 logits = pred_output.predictions
 labels = pred_output.label_ids
@@ -106,12 +80,9 @@ print("Labels shape:", labels.shape)
 print("Preds shape:", preds.shape)
 
 
-# ============================================================
 # 6. Plot Confusion Matrix
-# ============================================================
 
-class_names = ["neutral", "biased"]  # 你可以改为你的实际标签顺序
-
+class_names = ["neutral", "biased"] 
 cm = confusion_matrix(labels, preds)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
 

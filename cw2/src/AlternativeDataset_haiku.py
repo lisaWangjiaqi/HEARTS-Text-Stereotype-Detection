@@ -19,7 +19,6 @@ HEADERS = {
     "X-API-Token": "GHfk5E5Ret2rtbVe5ODHvEDW15-KT4tvFGTv_xn1uUc",
 }
 
-# 多模型混合 → 破坏 LLM style leakage
 MODELS = [
     "us.anthropic.claude-3-haiku-20240307-v1:0"
 ]
@@ -77,13 +76,13 @@ def clause_permute(text):
 
 
 def inject_noise(text):
-    # 随机加入 filler/connector
+    # filler/connector
     if random.random() < 0.3:
         text += ", " + random_filler()
     if random.random() < 0.3:
         text += ", " + random_connector()
 
-    # Clause permutation（极强扰动）
+    # Clause permutation
     if random.random() < 0.4:
         text = clause_permute(text)
 
@@ -206,7 +205,7 @@ def main():
         generate_sample(city, AMB_NEUTRAL_TMPL, 0)
         time.sleep(1.0)
 
-    print("\n🎉 DONE — saved to", OUTPUT_FILE)
+    print("\n DONE — saved to", OUTPUT_FILE)
 
 if __name__ == "__main__":
     main()

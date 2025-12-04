@@ -12,9 +12,7 @@ import matplotlib.pyplot as plt
 OOD_PATH = "Travelbias_dataset/travel_bias_OOD.jsonl"
 # MODEL_DIR = "results/improved_roberta/checkpoint-129"
 MODEL_DIR = "results/improved_roberta_merge/checkpoint-118"
-# ================================
-# device 自动检测
-# ================================
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
@@ -80,12 +78,11 @@ print("Accuracy:", acc)
 print("Macro-F1:", macro_f1)
 
 # ============================================================
-# 🚀 新增部分：生成并保存 Confusion Matrix
+#nConfusion Matrix
 # ============================================================
 
 print("\n===== Saving Confusion Matrix =====")
 
-# 类别名称（你可以改）
 class_names = ["neutral", "biased"]
 
 cm = confusion_matrix(labels, preds)

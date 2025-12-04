@@ -62,7 +62,7 @@ test_ds.set_format("torch")
 
 
 # ============================================================
-# 3. Model （自动保存 config.json）
+# 3. Model 
 # ============================================================
 
 model = AutoModelForSequenceClassification.from_pretrained(
