@@ -96,6 +96,7 @@ HEARTS-Text-Stereotype-Detection/
 ├── LICENSE
 ├── README.md
 └── requirements.txt
+```
 
 ## 4. Baseline Reproduction (EMGSD → ALBERT)
 The baseline model from the HEARTS paper was reproduced using the EMGSD dataset.
@@ -118,10 +119,11 @@ python train_emgsd_albert.py \
 | --------------------------------------------------- | ------- |
 | Original EMGSD dataset                              | 200     |
 | Travel stereotype dataset (LLM generated + cleaned) | 539     |
-| **Total(Merge Dataset)**                            | **739** |
+| **Total(Merged Dataset)**                           | **739** |
 
 Out-of-distribution test set: 
-```jsonl
+
+```bash
 travel_bias_OOD.jsonl
 ```
 
