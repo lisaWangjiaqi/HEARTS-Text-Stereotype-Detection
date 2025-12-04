@@ -1,0 +1,12 @@
+echo "cw2/src/results/" >> .gitignore
+echo "cw2/src/output/" >> .gitignore
+echo "cw2/src/checkpoints/" >> .gitignore
+echo "cw2/src/*ckpt*" >> .gitignore
+echo "cw2/src/*.pt" >> .gitignore
+echo "cw2/src/*.bin" >> .gitignore
+echo "cw2/src/*_save/*" >> .gitignore
+echo "cw2/.venv/" >> .gitignore
+echo "__pycache__/" >> .gitignore
+echo "*.pyc" >> .gitignore
+echo "*.log" >> .gitignore
+echo "*.csv" >> .gitignore # 可选
