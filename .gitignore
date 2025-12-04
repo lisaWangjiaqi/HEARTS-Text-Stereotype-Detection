@@ -10,3 +10,5 @@ echo "__pycache__/" >> .gitignore
 echo "*.pyc" >> .gitignore
 echo "*.log" >> .gitignore
 echo "*.csv" >> .gitignore # 可选
+
+cw2/src/results/
