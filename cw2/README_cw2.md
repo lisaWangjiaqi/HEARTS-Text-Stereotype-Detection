@@ -135,6 +135,54 @@ Dataset format:
 1 = stereotype
 0 = neutral text
 
+#### Dataset Construction Workflow
+```mermaid
+%%{init: {
+  'theme': 'default',
+  'flowchart': { 'nodeSpacing': 90, 'rankSpacing': 30, 'subGraphPadding': 18 },
+  'themeVariables': { 'fontSize': '24px', 'fontFamily': 'Arial','padding': 12}
+}}%%
+
+flowchart TD
+
+%% =============== STEP 1 ===============
+subgraph STEP1["Data Sourcing"]
+    direction LR
+    A[LLM generates 500 travel sentences<br/>Explicit / Implicit / Counterfactual / Hard Neutral / Adversarial Neutral    ]
+    --> 
+    B[Add EMGSD dataset<br/>200+ Stereotype/Unrelated.      ]
+end
+
+%% Flow to next step
+STEP1 --> STEP2
+
+%% =============== STEP 2 ===============
+subgraph STEP2["Data Cleaning"]
+    direction LR
+    C[Anonymisation<br/>Remove city names]
+    --> 
+    D[Length filtering<br/>6 ≤ tokens ≤ 95]
+    --> 
+    E[Remove LLM-style stereotype]
+    --> 
+    F[Neutral whitelist filtering]
+    --> 
+    G[Deduplication & shuffling]
+end
+
+%% Flow to next step
+STEP2 --> STEP3
+
+%% =============== STEP 3 ===============
+subgraph STEP3["Data Splits"]
+    direction LR
+    H[travel_bias_hard_v2.jsonl<br/>removed_v2.jsonl]
+    --> 
+    I[Data Splits<br/>Train / Val / Test]
+    --> 
+    J[Model training & evaluation]
+end
+```
 
 ## 6. 🔥 Improved Model
 RoBERTa: 
@@ -147,16 +195,104 @@ Model and results are stored under:
 cw2/src/results/
 ```
 
+
+#### Model Training Workflow
+```mermaid
+%%{init: {
+  "theme": "default",
+  "flowchart": { "nodeSpacing": 20, "rankSpacing": 25 },
+  "themeVariables": { "fontSize": "11px", "fontFamily": "Arial" }
+}}%%
+
+flowchart TD
+
+    %% ========== DATA LOADING ==========
+    A[Load Dataset<br/>travel_bias_hard_v2.jsonl] 
+        
+
+    %% ========== Tokenization & Formatting ==========
+    A --> D[Tokenization & Formatting<br/>roberta-large, truncation, padding, to_torch]
+
+   
+    %% ========== MODEL ==========
+    D --> E[Load RoBERTa-large<br/>num_labels=2]
+
+
+    %% ========== TRAINER SETUP ==========
+    E --> G[Training Arguments<br/>lr=2e-5, batch=8, epochs=3<br/>save_best, warmup_ratio=0.1]
+
+    
+    %% ========== TRAINING ==========
+    G --> H[Trainer Setup & Model Training]
+
+    %% ========== EVALUATION + OUTPUT ==========
+    H --> I[Evaluation & Metrics Saving<br/>results/improved_roberta/]
+
+```
+
 ## 7. 📊 Evaluation
-Accuracy
-Macro-F1
-Confusion Matrix
+Accuracy,Macro-F1,Confusion Matrix
 ```bash
 python evaluate_ood.py
 ```
+**Performance differences on a new domain (travel text)**
+
+| Model          | Dataset             | Accuracy | Macro-F1 |
+|----------------|-------------------- |---------:|---------:|
+| ALBERT baseline| EMGSD               |   0.85   |   0.83   |
+| ALBERT baseline| TravelBias          |   0.52   |   0.41   |
+| RoBERTa        | TravelBias（Merged） |   0.92   |   0.92   |
+| RoBERTa        | TravelBias（OOD#1）  |   0.74   |   0.74   |
+| RoBERTa        | TravelBias（OOD#2）  |   0.85   |   0.85   |
 
 
 ## 8. Reproducing the Entire Project
+
+
+#### Full Pipeline Overview
+```mermaid
+%%{init: {
+  'theme':'default',
+  'flowchart': { 'nodeSpacing': 15, 'rankSpacing': 15, 'subGraphPadding': 4 },
+  'themeVariables': {
+      'fontSize': '10px',
+      'fontFamily': 'Arial'
+  }
+}}%%
+
+flowchart LR
+
+%% =============== STEP 1 (TB inside) ===============
+subgraph DATA["Step 1: Dataset Construction Pipeline"]
+    direction TB
+    A[Data Sourcing]
+    B[Data Cleaning]
+    C[Output & Splits]
+    A --> B --> C
+end
+
+DATA --> MODEL
+
+%% =============== STEP 2 (TB inside) ===============
+subgraph MODEL["Step 2: Model Adaptation"]
+    direction TB
+    M1["RoBERTa-large Encoder<br/>(domain-adapted)"]
+    M2["Binary Stereotype Classifier<br/>(Stereotype vs Neutral)"]
+    M1 --> M2
+end
+
+MODEL --> EVAL
+
+%% =============== STEP 3 (TB inside) ===============
+subgraph EVAL["Step 3: Training and Evaluation"]
+    direction TB
+    T1["Training on Merged Dataset<br/>(TravelBias + EMGSD subset)"]
+    T2["In-domain Evaluation<br/>Acc ≈ 0.92 | F1 ≈ 0.92"]
+    T3["OOD Evaluation<br/>Acc ≈ 0.74 | F1 ≈ 0.74"]
+    T1 --> T2 --> T3
+end
+
+```
 
 Prepare datasets
 ```bash
