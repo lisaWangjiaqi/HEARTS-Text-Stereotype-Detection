@@ -140,7 +140,7 @@ Dataset format:
 %%{init: {
   'theme': 'default',
   'flowchart': { 'nodeSpacing': 90, 'rankSpacing': 30, 'subGraphPadding': 18 },
-  'themeVariables': { 'fontSize': '24px', 'fontFamily': 'Arial','padding': 12}
+  'themeVariables': { 'fontSize': '22px', 'fontFamily': 'Arial','padding': 12}
 }}%%
 
 flowchart TD
@@ -231,7 +231,8 @@ flowchart TD
 ```
 
 ## 7. 📊 Evaluation
-Accuracy,Macro-F1,Confusion Matrix
+The final model is evaluated on the TravelBias test split, and the complete evaluation output is stored in results/improved_roberta_merged/metrics.json, ensuring transparent and reproducible reporting.
+
 ```bash
 python evaluate_ood.py
 ```
@@ -247,7 +248,6 @@ python evaluate_ood.py
 
 
 ## 8. Reproducing the Entire Project
-
 
 #### Full Pipeline Overview
 ```mermaid
@@ -294,22 +294,28 @@ end
 
 ```
 
-Prepare datasets
+Installation / Environment Setup
 ```bash
-cw2/src/Travelbias_dataset/
+pip install -r requirements.txt
 ```
 
-Train travel stereotype models
+Run
 ```bash
-python cw2/src/train_roberta_travel_merged.py
+#1. TravelBias dataset
+#cw2/src/Travelbias_dataset/
+
+# 2. Train the merged RoBERTa model
+python train_roberta_travel_merged.py
+
+# 3. Evaluate OOD performance
+python evaluate_ood.py
+
 ```
 
-Run evaluation
+Model Files & Outputs
 ```bash
-python cw2/src/evaluate_ood.py
+cw2/src/results/improved_roberta_merge/
 ```
-
-
 
 
 
