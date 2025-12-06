@@ -113,6 +113,45 @@ python train_emgsd_albert.py \
   --seed 42
 ```
 
+##### ALBERT Baseline Architecture for EMGSD Stereotype Classification
+```mermaid
+%%{init: {
+  "theme": "default",
+  "flowchart": { "nodeSpacing": 25, "rankSpacing": 30 },
+  "themeVariables": { "fontSize": "14px", "fontFamily": "Arial" }
+}}%%
+
+flowchart TD
+
+    %% ===== Input =====
+    A[Input Text<br/>EMGSD text_with_marker] --> B
+
+    %% ===== Tokenization =====
+    B[Tokenization: WordPiece] --> C
+
+    %% ===== Embedding Layer =====
+    C[Shared Embedding Layer<br/>ALBERT Embedding Sharing] --> ENC
+
+    %% ===== Transformer Encoder (Parameter Sharing) =====
+    subgraph ENC["Transformer Encoder Stack<br/>(Parameter Sharing)"]
+        direction LR
+        E1[Encoder Layer 1<br/>same weights reused]
+        E2[Encoder Layer 2<br/>same weights reused]
+        E3[... repeated layers ...]
+        E1 --> E2 --> E3
+    end
+
+    ENC --> F
+
+    %% ===== Pooled Representation =====
+    F[Pooled Representation<br/>CLS] --> G
+
+    %% ===== Classification Head =====
+    G[Classification Head<br/>13-way Softmax] --> H
+
+    %% ===== Output =====
+    H[Output: 13 Stereotype Categories<br/>gender / nationality / profession / etc.]
+```
 
 ## 5. Dataset
 | Source                                              | Count   |
@@ -320,4 +359,3 @@ cw2/src/results/improved_roberta_merge/
 
 
 
-  
