@@ -112,7 +112,7 @@ python train_emgsd_albert.py \
   --num_epochs 4 \
   --seed 42
 ```
-##### Reproduction Result
+#### Reproduction Result
 
 |      Model     | Paper Result | Reproduction |  △  |
 | -------------- | -------------| -------------|-----|
@@ -120,7 +120,7 @@ python train_emgsd_albert.py \
 
 Within ±5% of the original HEARTS paper (meets replication requirement).
 
-##### ALBERT Baseline Architecture for EMGSD Stereotype Classification
+### ALBERT Baseline Architecture for EMGSD Stereotype Classification
 ```mermaid
 %%{init: {
   "theme": "default",
@@ -189,7 +189,7 @@ Dataset format:
 1 = stereotype
 0 = neutral text
 
-#### Dataset Construction Workflow
+### Dataset Construction Workflow
 ```mermaid
 %%{init: {
   'theme': 'default',
@@ -252,7 +252,7 @@ cw2/src/results/
 ```
 
 
-#### Model Training Workflow
+### Model Training Workflow
 ```mermaid
 %%{init: {
   "theme": "default",
