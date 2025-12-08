@@ -112,6 +112,13 @@ python train_emgsd_albert.py \
   --num_epochs 4 \
   --seed 42
 ```
+##### Reproduction Result
+
+|      Model     | Paper Result | Reproduction |  △  |
+| -------------- | -------------| -------------|-----|
+| ALBERT-base-v2 |     0.815    |     0.844    |0.029|  
+
+Within ±5% of the original HEARTS paper (meets replication requirement).
 
 ##### ALBERT Baseline Architecture for EMGSD Stereotype Classification
 ```mermaid
@@ -124,7 +131,7 @@ python train_emgsd_albert.py \
 flowchart TD
 
     %% ===== Input =====
-    A[Input Text<br/>EMGSD text_with_marker] --> B
+    A[Input Text:<br/>EMGSD text_with_marker] --> B
 
     %% ===== Tokenization =====
     B[Tokenization: WordPiece] --> C
@@ -150,8 +157,10 @@ flowchart TD
     G[Classification Head<br/>13-way Softmax] --> H
 
     %% ===== Output =====
-    H[Output: 13 Stereotype Categories<br/>gender / nationality / profession / etc.]
+    H[Output: Stereotype Categories<br/>gender / nationality / profession <br/>/ etc.]
 ```
+
+
 
 ## 5. Dataset
 | Source                                              | Count   |
@@ -159,6 +168,12 @@ flowchart TD
 | Original EMGSD dataset                              | 200     |
 | Travel stereotype dataset (LLM generated + cleaned) | 539     |
 | **Total(Merged Dataset)**                           | **739** |
+
+Travel-Bias Dataset
+
+```bash
+travel_bias_hard_v2.jsonl
+```
 
 Out-of-distribution test set: 
 
@@ -187,9 +202,9 @@ flowchart TD
 %% =============== STEP 1 ===============
 subgraph STEP1["Data Sourcing"]
     direction LR
-    A[LLM generates 500 travel sentences<br/>Explicit / Implicit / Counterfactual / Hard Neutral / Adversarial Neutral    ]
+    A[LLM generates 500 <br/>travel sentences<br/>Explicit / Implicit / <br/>Counterfactual / <br/>Hard Neutral / <br/>Adversarial Neutral]:::wide
     --> 
-    B[Add EMGSD dataset<br/>200+ Stereotype/Unrelated.      ]
+    B[Add EMGSD dataset<br/>200+ Stereotype/<br/>Unrelated.]:::wide
 end
 
 %% Flow to next step
@@ -202,11 +217,11 @@ subgraph STEP2["Data Cleaning"]
     --> 
     D[Length filtering<br/>6 ≤ tokens ≤ 95]
     --> 
-    E[Remove LLM-style stereotype]
+    E[Remove LLM-style <br/>stereotype]
     --> 
-    F[Neutral whitelist filtering]
+    F[Neutral whitelist <br/>filtering]
     --> 
-    G[Deduplication & shuffling]
+    G[Deduplication & <br/>shuffling]
 end
 
 %% Flow to next step
@@ -219,14 +234,16 @@ subgraph STEP3["Data Splits"]
     --> 
     I[Data Splits<br/>Train / Val / Test]
     --> 
-    J[Model training & evaluation]
+    J[Model training & <br/>evaluation]
 end
 ```
 
 ## 6. 🔥 Improved Model
 RoBERTa: 
+- Travel descriptions contain softer, more implicit stereotypes 
+→ require stronger contextual encoding.
 ```bash
-python train_roberta_travel_merge.py
+python train_roberta_travel_merged.py
 ```
 
 Model and results are stored under:
@@ -250,7 +267,7 @@ flowchart TD
         
 
     %% ========== Tokenization & Formatting ==========
-    A --> D[Tokenization & Formatting<br/>roberta-large, truncation, padding, to_torch]
+    A --> D[Tokenization & Formatting<br/>roberta-large, truncation, <br/>padding, to_torch]
 
    
     %% ========== MODEL ==========
@@ -270,7 +287,14 @@ flowchart TD
 ```
 
 ## 7. 📊 Evaluation
-The final model is evaluated on the TravelBias test split, and the complete evaluation output is stored in results/improved_roberta_merged/metrics.json, ensuring transparent and reproducible reporting.
++ The final model is evaluated on the TravelBias test split, and the complete evaluation output is stored in 
+```bash
+results/improved_roberta_merged/metrics.json
+```
+ensuring transparent and reproducible reporting.
+
+
++ Performs OOD (out-of-distribution) evaluation
 
 ```bash
 python evaluate_ood.py
@@ -279,11 +303,11 @@ python evaluate_ood.py
 
 | Model          | Dataset             | Accuracy | Macro-F1 |
 |----------------|-------------------- |---------:|---------:|
-| ALBERT baseline| EMGSD               |   0.85   |   0.83   |
-| ALBERT baseline| TravelBias          |   0.52   |   0.41   |
-| RoBERTa        | TravelBias（Merged） |   0.92   |   0.92   |
-| RoBERTa        | TravelBias（OOD#1）  |   0.74   |   0.74   |
-| RoBERTa        | TravelBias（OOD#2）  |   0.85   |   0.85   |
+| ALBERT baseline| EMGSD               |   0.844   |  0.826  |
+| ALBERT baseline| TravelBias          |   0.461   |  0.380  |
+| RoBERTa        | TravelBias          |   0.912   |  0.912  |
+| RoBERTa        | TravelBias（OOD#1）  |   0.774   |  0.758  |
+
 
 
 ## 8. Reproducing the Entire Project
@@ -296,8 +320,10 @@ python evaluate_ood.py
   'themeVariables': {
       'fontSize': '10px',
       'fontFamily': 'Arial'
+
   }
 }}%%
+
 
 flowchart LR
 
@@ -356,6 +382,22 @@ Model Files & Outputs
 cw2/src/results/improved_roberta_merge/
 ```
 
+## 9. Discussion and Critical Reflections on SDGs
+
+##### SDGs
+SDG 10 – Reduced Inequalities: Detects travel bias for fair, cross-cultural understanding.
+SDG 16 – Peace, Justice & Strong Institutions: Improves AI content moderation by reducing the spread of biased outputs.
+SDG 9 – Industry, Innovation & Infrastructure: Shows how bias-detection models can be adapted responsibly to new domains.
 
 
+
+##### Ethical Considerations
++ Transparent data sources, no personal information.
++ Neutral annotation to avoid amplifying bias.
++ Model detects bias but does not generate it.
++ Reproducible and low-risk research process.
+
+
+##### Limitations
++ Small, LLM-generated dataset→ limited generalisation. 
 
