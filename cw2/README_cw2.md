@@ -1,9 +1,10 @@
-# COMP0173 Coursework 2 – HEARTS for Auditing AI Travel Assistants
+# COMP0173 Coursework 2 – Adapting HEARTS for Stereotype Detection in AI-Generated Travel Descriptions
 
 > Student: Jiaqi Wang  
 > UCL ID: 25032303 
 > Course: COMP0173 – AI for Sustainable Development 
-> Project: HEARTS for Auditing AI Travel Assistants
+> Project: Adapting HEARTS for Stereotype Detection in AI-Generated Travel Descriptions
+
 
 ---
 
@@ -38,7 +39,7 @@ This repository is a **fork** of
   - `Model Explainability/`
   - `LLM Bias Evaluation Exercise/`
 
-- All **coursework-specific** code, notebooks and documentation are contained in the `cw2/` directory:
+- All **coursework-specific** code, notebooks and documentation are contained in the `cw2/` directory ( `ec2_full_backup` branch):
   - This makes it clear which parts are my contribution.
 
 ---
@@ -112,7 +113,7 @@ python train_emgsd_albert.py \
   --num_epochs 4 \
   --seed 42
 ```
-#### Reproduction Result
+**Reproduction Result**
 
 |      Model     | Paper Result | Reproduction |  △  |
 | -------------- | -------------| -------------|-----|
@@ -120,7 +121,7 @@ python train_emgsd_albert.py \
 
 Within ±5% of the original HEARTS paper (meets replication requirement).
 
-### ALBERT Baseline Architecture for EMGSD Stereotype Classification
+**ALBERT Baseline Architecture for EMGSD Stereotype Classification**
 ```mermaid
 %%{init: {
   "theme": "default",
@@ -186,10 +187,10 @@ Dataset format:
 {"text": "People in {city} always…", "label": 1}
 {"text": "{city} is a vibrant city with...", "label": 0}
 ```
-1 = stereotype
+1 = stereotype,
 0 = neutral text
 
-### Dataset Construction Workflow
+**Dataset Construction Workflow**
 ```mermaid
 %%{init: {
   'theme': 'default',
@@ -252,7 +253,7 @@ cw2/src/results/
 ```
 
 
-### Model Training Workflow
+**Model Training Workflow**
 ```mermaid
 %%{init: {
   "theme": "default",
@@ -285,6 +286,8 @@ flowchart TD
     H --> I[Evaluation & Metrics Saving<br/>results/improved_roberta/]
 
 ```
+(After hyperparameter tuning, these parameters achieve the best results)
+
 
 ## 7. 📊 Evaluation
 + The final model is evaluated on the TravelBias test split, and the complete evaluation output is stored in 
@@ -307,12 +310,24 @@ python evaluate_ood.py
 | ALBERT baseline| TravelBias          |   0.461   |  0.380  |
 | RoBERTa        | TravelBias          |   0.912   |  0.912  |
 | RoBERTa        | TravelBias（OOD#1）  |   0.774   |  0.758  |
+| RoBERTa        | TravelBias（OOD#2）  |   0.85   |  0.85  |
+
+
+**Misclassified Examples**
+| #     | Text  | True Label | Pred Label |
+| ----- | ---------------------------------------------------------------------------------------- | ---------- | ---------- |
+| **1** | “The people of Guangzhou will eat absolutely anything with four legs except a table.”    | **1**      | **0**      |
+| **2** | “Life in Xi'an is entirely centered around its ancient history, with no modern culture.” | **1**      | **1**      |
+| **3** | “Harbin residents are completely accustomed to and unfazed by extreme cold.”             | **1**      | **1**      |
+| **4** | “Wuhan people have fiery tempers and are prone to shouting in daily conversation.”       | **1**      | **0**      |
+| **5** | “Everyone in Suzhou is gentle, soft-spoken, and engaged in classical arts.”              | **1**      | **1**      |
+| **6** | “Chongqing is nothing but steep hills, hotpot, and a maze of overpasses.”                | **1**      | **0**      |
 
 
 
 ## 8. Reproducing the Entire Project
 
-### Full Pipeline Overview
+**Full Pipeline Overview**
 ```mermaid
 %%{init: {
   'theme':'default',
@@ -384,20 +399,25 @@ cw2/src/results/improved_roberta_merge/
 
 ## 9. Discussion and Critical Reflections on SDGs
 
-#### SDGs
+**SDGs**
 SDG 10 – Reduced Inequalities: Detects travel bias for fair, cross-cultural understanding.
 SDG 16 – Peace, Justice & Strong Institutions: Improves AI content moderation by reducing the spread of biased outputs.
 SDG 9 – Industry, Innovation & Infrastructure: Shows how bias-detection models can be adapted responsibly to new domains.
 
 
 
-#### Ethical Considerations
+**Ethical Considerations**
 + Transparent data sources, no personal information.
 + Neutral annotation to avoid amplifying bias.
 + Model detects bias but does not generate it.
 + Reproducible and low-risk research process.
 
 
-#### Limitations
+**Limitations**
 + Small, LLM-generated dataset→ limited generalisation. 
 
+**Future work**
++ Expanding the dataset with real travel descriptions
++ Adding explainability modules 
+
+Supporting fair and reliable AI-generated travel content.
