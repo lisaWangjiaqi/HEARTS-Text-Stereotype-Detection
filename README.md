@@ -113,7 +113,7 @@ python train_emgsd_albert.py \
   --num_epochs 4 \
   --seed 42
 ```
-#### Reproduction Result
+**Reproduction Result**
 
 |      Model     | Paper Result | Reproduction |  △  |
 | -------------- | -------------| -------------|-----|
@@ -121,7 +121,7 @@ python train_emgsd_albert.py \
 
 Within ±5% of the original HEARTS paper (meets replication requirement).
 
-### ALBERT Baseline Architecture for EMGSD Stereotype Classification
+**ALBERT Baseline Architecture for EMGSD Stereotype Classification**
 ```mermaid
 %%{init: {
   "theme": "default",
@@ -190,7 +190,7 @@ Dataset format:
 1 = stereotype,
 0 = neutral text
 
-### Dataset Construction Workflow
+**Dataset Construction Workflow**
 ```mermaid
 %%{init: {
   'theme': 'default',
@@ -253,7 +253,7 @@ cw2/src/results/
 ```
 
 
-### Model Training Workflow
+**Model Training Workflow**
 ```mermaid
 %%{init: {
   "theme": "default",
@@ -327,7 +327,7 @@ python evaluate_ood.py
 
 ## 8. Reproducing the Entire Project
 
-### Full Pipeline Overview
+**Full Pipeline Overview**
 ```mermaid
 %%{init: {
   'theme':'default',
@@ -399,24 +399,24 @@ cw2/src/results/improved_roberta_merge/
 
 ## 9. Discussion and Critical Reflections on SDGs
 
-#### SDGs
+**SDGs**
 SDG 10 – Reduced Inequalities: Detects travel bias for fair, cross-cultural understanding.
 SDG 16 – Peace, Justice & Strong Institutions: Improves AI content moderation by reducing the spread of biased outputs.
 SDG 9 – Industry, Innovation & Infrastructure: Shows how bias-detection models can be adapted responsibly to new domains.
 
 
 
-#### Ethical Considerations
+**Ethical Considerations**
 + Transparent data sources, no personal information.
 + Neutral annotation to avoid amplifying bias.
 + Model detects bias but does not generate it.
 + Reproducible and low-risk research process.
 
 
-#### Limitations
+**Limitations**
 + Small, LLM-generated dataset→ limited generalisation. 
 
-#### Future work
+**Future work**
 + Expanding the dataset with real travel descriptions
 + Adding explainability modules 
 
