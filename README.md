@@ -400,9 +400,9 @@ cw2/src/results/improved_roberta_merge/
 ## 9. Discussion and Critical Reflections on SDGs
 
 **SDGs**
-SDG 10 – Reduced Inequalities: Detects travel bias for fair, cross-cultural understanding.
-SDG 16 – Peace, Justice & Strong Institutions: Improves AI content moderation by reducing the spread of biased outputs.
-SDG 9 – Industry, Innovation & Infrastructure: Shows how bias-detection models can be adapted responsibly to new domains.
++ SDG 10 – Reduced Inequalities: Detects travel bias for fair, cross-cultural understanding.
++ SDG 16 – Peace, Justice & Strong Institutions: Improves AI content moderation by reducing the spread of biased outputs.
++ SDG 9 – Industry, Innovation & Infrastructure: Shows how bias-detection models can be adapted responsibly to new domains.
 
 
 
