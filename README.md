@@ -23,9 +23,6 @@ The coursework has two main goals:
 2. **Adapt** the model to a new context:  
    auditing **AI travel assistants** for **China/city stereotypes** in English travel descriptions.
 
-The work is organised to directly support the five technical requirements of the coursework:  
-baseline replication, new context definition, alternative dataset, model adaptation, and evaluation.
-
 ---
 
 ## 2. Relationship to the Original Repository
@@ -40,8 +37,6 @@ This repository is a **fork** of
   - `LLM Bias Evaluation Exercise/`
 
 - All **coursework-specific** code, notebooks and documentation are contained in the `cw2/` directory ( `ec2_full_backup` branch):
-  - This makes it clear which parts are my contribution.
-
 ---
 
 ## 3. Repository Structure (Coursework Part)
@@ -86,8 +81,8 @@ HEARTS-Text-Stereotype-Detection/
 │   │   └── train_roberta_travel_merged.py # RoBERTa (Travelbias_dataset + EMGSD) 
 │   │
 │   │
-│   └── poster/                           # Poster 
-│       └── cw2_poster.pdf
+│   └── cw2_poster.pdf                     # Poster 
+│       
 │
 ├── Exploratory Data Analysis/            
 ├── LLM Bias Evaluation Exercise/         
@@ -99,7 +94,7 @@ HEARTS-Text-Stereotype-Detection/
 └── requirements.txt
 ```
 
-## 4. Baseline Reproduction (EMGSD → ALBERT)
+## 4. Baseline Reproduction 
 The baseline model from the HEARTS paper was reproduced using the EMGSD dataset.
 train_emgsd_albert.py
 
@@ -113,7 +108,7 @@ python train_emgsd_albert.py \
   --num_epochs 4 \
   --seed 42
 ```
-**Reproduction Result**
+**Reproduction Result (accuracy)**
 
 |      Model     | Paper Result | Reproduction |  △  |
 | -------------- | -------------| -------------|-----|
@@ -171,10 +166,14 @@ flowchart TD
 | **Total(Merged Dataset)**                           | **739** |
 
 Travel-Bias Dataset
-
 ```bash
 travel_bias_hard_v2.jsonl
 ```
+Merged Dataset (Evaluation)
+```bash
+merged_dataset.jsonl
+```
+
 
 Out-of-distribution test set: 
 
@@ -400,11 +399,9 @@ cw2/src/results/improved_roberta_merge/
 ## 9. Discussion and Critical Reflections on SDGs
 
 **SDGs**
-+ SDG 9 – Industry, Innovation & Infrastructure: Shows how bias-detection models can be adapted responsibly to new domains.
 + SDG 10 – Reduced Inequalities: Detects travel bias for fair, cross-cultural understanding.
 + SDG 16 – Peace, Justice & Strong Institutions: Improves AI content moderation by reducing the spread of biased outputs.
-
-
++ SDG 9 – Industry, Innovation & Infrastructure: Shows how bias-detection models can be adapted responsibly to new domains.
 
 
 **Ethical Considerations**
